@@ -1,0 +1,16 @@
+# Real documents and personal data: never commit
+private/
+
+# Raw downloads (legal corpus, etc.)
+data/**/raw/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
