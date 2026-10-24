@@ -12,7 +12,7 @@ The page uses the Chakra Petch typeface from the Palier logo. Loading fonts from
 - **Holding page:** publish a single static "under construction" page now (`site/`: logo, one-line pitch, link to `github.com/palier-dev`, contact `contact@palier.dev`), so `palier.dev` is never empty. It is replaced by the documentation and blog site when that exists.
 - **Hosting:** **GitHub Pages**, served from a dedicated repository **`palier-dev/site`** (branch `main`, root). The source stays in this monorepo under `site/`; a workflow (`.github/workflows/sync-site.yml`) copies it to `palier-dev/site` on every change under `site/` on `main`. `site/CNAME` (`palier.dev`) sets the custom domain.
 - **Fonts:** **self-hosted** in `site/fonts/` (Chakra Petch, SIL Open Font License, licence shipped as `site/fonts/OFL.txt`). The page makes no requests to third-party font, script or tracking services; everything it loads comes from `palier.dev`.
-- **DNS, proxy and analytics:** **Cloudflare** (the registrar, Free plan) manages DNS for `palier.dev` and proxies web traffic to GitHub Pages, which provides its basic analytics without a tracking script.
+- **DNS, proxy and analytics:** **Cloudflare** (the registrar, Free plan) manages DNS for `palier.dev` and proxies web traffic to GitHub Pages. Cloudflare provides basic edge analytics without a tracking script.
 - **Email obfuscation:** Cloudflare's *Email Address Obfuscation* stays **on**. It rewrites the `mailto:contact@palier.dev` link and adds a small decoding script, served from `palier.dev` itself, to hide the address from scrapers. The script does not track visitors.
 
 ## Rationale
