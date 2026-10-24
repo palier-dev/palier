@@ -1,0 +1,77 @@
+# Copies site/ from this monorepo to palier-dev/site, which GitHub Pages serves at palier.dev.
+# See docs/adr/0004-website-hosting.md.
+#
+# One-time setup:
+#   1. ssh-keygen -t ed25519 -N "" -C "palier-site-sync" -f site_deploy_key
+#   2. palier-dev/site → Settings → Deploy keys → Add: paste site_deploy_key.pub, tick "Allow write access"
+#   3. palier-dev/palier → Settings → Secrets and variables → Actions → New secret
+#      SITE_DEPLOY_KEY = contents of site_deploy_key (private key), then delete both local files
+name: Sync site to palier-dev/site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/sync-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-site
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_REPO: palier-dev/site
+      TARGET_BRANCH: main
+    steps:
+      - name: Check out monorepo
+        uses: actions/checkout@v4
+
+      - name: Configure deploy key
+        env:
+          SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$SITE_DEPLOY_KEY" ]; then
+            echo "::error::Secret SITE_DEPLOY_KEY is missing. See the setup steps at the top of this workflow."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SITE_DEPLOY_KEY" > ~/.ssh/site_deploy_key
+          chmod 600 ~/.ssh/site_deploy_key
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
+
+      - name: Clone target repository
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/site_deploy_key -o IdentitiesOnly=yes
+        run: |
+          git clone --depth 1 "git@github.com:${TARGET_REPO}.git" target
+          cd target
+          # Works for an empty repository too
+          git checkout -B "$TARGET_BRANCH"
+
+      - name: Copy site/ into target
+        run: |
+          # Mirror site/ exactly, keeping the target's .git
+          rsync -a --delete --exclude '.git' site/ target/
+
+      - name: Commit and push if changed
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/site_deploy_key -o IdentitiesOnly=yes
+        run: |
+          cd target
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync from palier-dev/palier@${GITHUB_SHA::7}" \
+                     -m "Source: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/${GITHUB_SHA}/site"
+          git push origin "HEAD:${TARGET_BRANCH}"
