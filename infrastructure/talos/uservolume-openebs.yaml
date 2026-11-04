@@ -1,0 +1,8 @@
+# Talos user volume for OpenEBS LocalPV Hostpath (mounted at /var/mnt/openebs).
+# Apply to every WORKER node (the control plane does not run workloads):
+#   talosctl patch machineconfig -n <worker-ip> --patch @uservolume-openebs.yaml
+#   talosctl get volumestatus -n <worker-ip> | grep u-openebs
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: openebs
+volumeType: directory

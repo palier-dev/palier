@@ -1,0 +1,23 @@
+# Barman Cloud plugin (wave 1): backups and WAL archiving to S3 (Garage on the VPS).
+# The in-tree barmanObjectStore is deprecated since CloudNativePG 1.26.
+# Requirements: CloudNativePG >= 1.26 and cert-manager installed (the plugin uses it for TLS).
+# Must live in the same namespace as the operator.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: plugin-barman-cloud
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cnpg-system
+  source:
+    repoURL: https://cloudnative-pg.github.io/charts
+    chart: plugin-barman-cloud
+    targetRevision: 0.8.1
+  syncPolicy:
+    syncOptions:
+      - ServerSideApply=true

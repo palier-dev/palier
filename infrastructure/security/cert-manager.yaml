@@ -1,0 +1,27 @@
+# cert-manager (sync wave -1): issues certificates inside the cluster.
+# Required by the CloudNativePG Barman Cloud plugin (TLS between operator and plugin).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: 1.21.3
+    helm:
+      valuesObject:
+        crds:
+          enabled: true # install CRDs with the chart (cert-manager >= 1.15)
+          keep: true # keep CRDs (and all certificates) if the Application is deleted
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,22 @@
+# Palier Postgres cluster, its backup target and schedule (wave 2).
+# The S3 credentials are a SealedSecret in the same folder (see infrastructure/README.md).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: palier-postgres
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: palier-data
+  source:
+    repoURL: https://github.com/palier-dev/palier.git
+    targetRevision: main
+    path: infrastructure/storage/postgres/palier-postgres
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
