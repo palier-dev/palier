@@ -14,3 +14,5 @@ Palier is a public, educational project: building an AI-native solution for Fren
 
 ## Where things are
 See the layout table in `README.md`.
+
+`private/` (git-ignored, local only) has its own `AGENTS.md` (conventions) and `INDEX.md` (entry point). Read them before working there.
