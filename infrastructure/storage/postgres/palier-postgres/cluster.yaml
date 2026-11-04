@@ -1,0 +1,52 @@
+# Palier Postgres: legal corpus first (pgvector + French full-text).
+# instances = number of worker nodes (control plane does not run workloads).
+# Required anti-affinity: one instance per node; a node loss leaves a full copy.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: palier-pg
+spec:
+  instances: 2
+  # "standard" images include pgvector (minimal images do not).
+  imageName: ghcr.io/cloudnative-pg/postgresql:18-standard-trixie
+  primaryUpdateStrategy: unsupervised
+
+  storage:
+    storageClass: openebs-hostpath
+    size: 20Gi   # informational: hostpath does not enforce sizes
+  walStorage:
+    storageClass: openebs-hostpath
+    size: 5Gi
+
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: 2Gi
+    limits:
+      memory: 4Gi
+
+  postgresql:
+    parameters:
+      shared_buffers: "1GB"
+      effective_cache_size: "3GB"
+      maintenance_work_mem: "512MB"   # HNSW index builds
+      max_wal_size: "2GB"
+
+  bootstrap:
+    initdb:
+      database: palier
+      owner: palier
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS vector;
+        - CREATE EXTENSION IF NOT EXISTS unaccent;
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: garage-vps
