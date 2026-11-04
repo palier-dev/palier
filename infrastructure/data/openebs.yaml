@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openebs
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openebs
+  source:
+    repoURL: https://openebs.github.io/openebs
+    chart: openebs
+    targetRevision: 4.6.2
+    helm:
+      valuesObject:
+        localpv-provisioner:
+          localpv:
+            basePath: /var/mnt/openebs/localpv-provisioner/ # Talos 1.14+ user volume; NEVER change after first sync
+          hostpathClass:
+            isDefaultClass: true
+        engines:
+          replicated:
+            mayastor:
+              enabled: false
+          local:
+            lvm:
+              enabled: false
+            zfs:
+              enabled: false
+        loki:
+          enabled: false
+        alloy:
+          enabled: false
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
